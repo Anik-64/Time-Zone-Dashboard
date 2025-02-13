@@ -1,0 +1,182 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>⏰</text></svg>">
+    <link href="https://fonts.googleapis.com/css2?family=Great+Vibes&family=Poppins:wght@300;400&display=swap" rel="stylesheet">
+    <title>Time Zone Dashboard</title>
+    <link href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.1/css/all.min.css" rel="stylesheet">
+    <style>
+        body {
+            display: flex;
+            flex-direction: column;
+            min-height: 100vh;
+            margin: 0;
+        }
+
+        main {
+            flex: 1;
+        }
+
+        .time-zone-card {
+            position: relative;
+            margin-bottom: 15px;
+        }
+
+        .remove-time-zone {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            background: none;
+            border: none;
+            color: red;
+            font-size: 1.2em;
+            cursor: pointer;
+        }
+
+        footer {
+            background-color: #343a40;
+            color: white;
+        }
+    </style>
+</head>
+<body>
+    <header class="bg-primary text-white shadow-lg">
+        <div class="container py-3">
+            <h1 class="text-2xl font-bold">Time Zone Dashboard</h1>
+        </div>
+    </header>
+
+    <main class="container py-4">
+        <div class="mb-4">
+            <select id="timeZoneSelect" class="form-control">
+                <option value="">Add a time zone</option>
+                <option value="Europe/London">Europe/London</option>
+                <option value="Europe/Berlin">Europe/Berlin</option>
+                <option value="Asia/Tokyo">Asia/Tokyo</option>
+                <option value="Australia/Sydney">Australia/Sydney</option>
+                <option value="America/Toronto">America/Toronto</option>
+                <option value="America/Mexico_City">America/Mexico_City</option>
+                <option value="Europe/Paris">Europe/Paris</option>
+                <option value="Asia/Dubai">Asia/Dubai</option>
+                <option value="America/Chicago">America/Chicago</option>
+                <option value="America/New_York">America/New_York</option>
+            </select>
+        </div>
+
+        <div id="timeZoneCards" class="row">
+            <!-- Time zone cards will be dynamically added here -->
+        </div>
+    </main>
+
+    <footer class="bg-dark text-white mt-4">
+        <div class="container py-3 text-center">
+            <p>&copy; 2025 Time Zone Dashboard. All rights reserved.</p>
+        </div>
+    </footer>
+
+    <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.9.3/dist/umd/popper.min.js"></script>
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+    <script>
+        const topTimeZones = [
+            "Asia/Dhaka",
+            "Europe/London",
+            "Europe/Berlin",
+            "Asia/Tokyo",
+            "Australia/Sydney",
+            "America/Toronto",
+            "America/Mexico_City",
+            "Europe/Paris",
+            "Asia/Dubai",
+            "America/Chicago",
+            "America/New_York"
+        ];
+
+        // Function to update dropdown options dynamically
+        function updateDropdown(selectedZones) {
+            const timeZoneSelect = document.getElementById('timeZoneSelect');
+            timeZoneSelect.innerHTML = '<option value="">Add a time zone</option>'; // Reset dropdown
+            topTimeZones.forEach(zone => {
+                if (!selectedZones.includes(zone)) {
+                    const option = document.createElement('option');
+                    option.value = zone;
+                    option.textContent = zone;
+                    timeZoneSelect.appendChild(option);
+                }
+            });
+        }
+
+        function getTimeForTimeZone(zone) {
+            const options = { timeZone: zone, hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false };
+            return new Date().toLocaleTimeString(undefined, options);
+        }
+
+        function updateTime(zone) {
+            const timeElement = document.getElementById(`time-${zone}`);
+            if (timeElement) {
+                timeElement.innerText = getTimeForTimeZone(zone);
+            }
+        }
+
+        function updateAllTimes() {
+            document.querySelectorAll('.time-zone-card').forEach(card => {
+                const zone = card.getAttribute('data-zone');
+                if (zone) {
+                    updateTime(zone);
+                }
+            });
+        }
+
+        setInterval(updateAllTimes, 1000);
+
+        document.getElementById('timeZoneSelect').addEventListener('change', function () {
+            const selectedZone = this.value;
+            if (selectedZone) {
+                const card = document.createElement('div');
+                card.className = 'col-md-4 time-zone-card';
+                card.setAttribute('data-zone', selectedZone);
+                card.innerHTML = `
+                    <div class="card">
+                        <div class="card-header d-flex justify-content-between align-items-center">
+                            <div><i class="fas fa-clock mr-2"></i>${selectedZone}</div>
+                            <button class="remove-time-zone btn btn-link text-danger" data-zone="${selectedZone}">&times;</button>
+                        </div>
+                        <div class="card-body">
+                            <p class="text-2xl font-bold" id="time-${selectedZone}">Loading...</p>
+                        </div>
+                    </div>
+                `;
+                document.getElementById('timeZoneCards').appendChild(card);
+                updateTime(selectedZone);
+
+                // Update dropdown to exclude the selected time zone
+                const selectedZones = Array.from(document.querySelectorAll('.time-zone-card')).map(card => card.getAttribute('data-zone'));
+                updateDropdown(selectedZones);
+
+                this.value = ''; // Reset dropdown selection
+            }
+        });
+
+        document.addEventListener('click', function (event) {
+            if (event.target.classList.contains('remove-time-zone')) {
+                const zone = event.target.getAttribute('data-zone');
+                document.querySelectorAll('.time-zone-card').forEach(card => {
+                    if (card.getAttribute('data-zone') === zone) {
+                        card.remove();
+                    }
+                });
+
+                // Update dropdown to include the removed time zone
+                const selectedZones = Array.from(document.querySelectorAll('.time-zone-card')).map(card => card.getAttribute('data-zone'));
+                updateDropdown(selectedZones);
+            }
+        });
+
+        // Initialize the dropdown with all time zones
+        updateDropdown([]);
+    </script>
+</body>
+</html>
